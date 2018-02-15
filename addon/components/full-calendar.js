@@ -80,12 +80,24 @@ export default Component.extend({
     fullCalendarElement.fullCalendar('rerenderEvents' );
   }),
 
+  elementInserted() {},
+
   /**
    * Register this component to parent controller. We need this to be able to send actions from outside.
    */
   didReceiveAttrs: function() {
-    let targetObject = this.get('targetObject') ? 'targetObject' : '_targetObject';
-    this.set(targetObject + '.' + this.get('register-as'), this);
+    if (this.get('register-as')) {
+      Ember.deprecate(`Using register-as is deprecated. Instead set an action for elementInserted that will be called with the component instance.
+        Change {{full-calendar register-as="accessToFullCalendar"}} to {{full-calendar elementInserted=(action (mut accessToFullCalendar))}}`,
+        false,
+        {
+          id: 'ember-cli-full-calendar.register-as',
+          until: '0.2'
+        }
+      );
+      let targetObject = this.get('targetObject') ? 'targetObject' : '_targetObject';
+      this.set(targetObject + '.' + this.get('register-as'), this);
+    }
   },
 
   didInsertElement() {
@@ -230,9 +242,15 @@ export default Component.extend({
       // Selecting
       selectable: this.get('selectable')
     });
+
+    this.elementInserted(this);
   },
 
-  // Actions sent from outsite to full calendar
+  getCalendarView() {
+    return this.$().fullCalendar('getView');
+  },
+
+  // Actions sent from outside to full calendar
   actions: {
 
     // Curent date
